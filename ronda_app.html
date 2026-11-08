@@ -103,6 +103,33 @@
       letter-spacing: -.01em;
     }
     h1, h2, h3, .font-extrabold, .font-bold { font-family: 'Manrope', 'DM Sans', sans-serif; }
+    #top-header {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      transition: transform .32s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease;
+      will-change: transform;
+    }
+    #top-header.nav-hidden { transform: translateY(-110%); }
+    #top-menu-toggle { min-height: 48px; }
+    #top-menu-toggle:focus-visible { outline-offset: -2px !important; }
+    #top-menu-chevron { transition: transform .28s cubic-bezier(.2,.7,.2,1); }
+    .top-menu-panel {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: max-height .34s ease, opacity .22s ease, transform .28s ease;
+    }
+    .top-menu-panel.is-open {
+      max-height: 180px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #top-header, .top-menu-panel, #top-menu-chevron { transition: none !important; }
+    }
     header {
       background: rgba(255,255,255,.88) !important;
       border-bottom: 1px solid rgba(24,34,48,.07) !important;
@@ -196,29 +223,25 @@
 <body class="min-h-screen flex flex-col pb-24 md:pb-0">
 
   <!-- ==================== HEADER / TOP NAVIGATION ==================== -->
-  <header id="top-header" class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/5 px-4 py-2">
+  <header id="top-header" class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/5 px-4">
     <div class="max-w-5xl mx-auto">
-      <button id="top-menu-toggle" type="button" onclick="toggleTopMenu()" aria-expanded="false" aria-controls="top-menu-panel" class="mx-auto flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-[#1a1a1a] shadow-sm hover:border-[#0066ff]/30 hover:text-[#0066ff] transition-colors">
-        <i class="fa-solid fa-sliders"></i><span>Menú y ubicación</span><i id="top-menu-chevron" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+      <button id="top-menu-toggle" type="button" onclick="toggleTopMenu()" aria-expanded="false" aria-controls="top-menu-panel" class="flex items-center gap-2 py-3 text-left text-base font-extrabold tracking-tight text-[#182230] hover:text-[#1769f5] transition-colors">
+        <span>Ronda</span><i id="top-menu-chevron" class="fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
       </button>
-      <div id="top-menu-panel" class="hidden max-w-5xl mx-auto pt-4 pb-2">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <button onclick="switchTab('tab-feed')" class="flex items-center gap-2 group text-left">
-            <span class="w-10 h-10 rounded-xl bg-[#1769f5] flex items-center justify-center text-white font-extrabold text-xl shadow-sm">R</span>
-            <span><span class="flex items-center gap-1 font-extrabold text-lg tracking-tight text-[#182230]">Ronda <i class="fa-solid fa-circle-check text-[#1769f5] text-xs" title="Red Vecinal"></i></span><span class="block text-xs text-[#77808d]"><i class="fa-solid fa-location-dot text-[#1769f5] mr-1"></i><span id="current-location-text">Colonia Miravalle, Zona A</span></span></span>
+      <div id="top-menu-panel" class="top-menu-panel" aria-hidden="true">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 pb-3">
+          <button type="button" onclick="changeLocation()" class="flex items-center gap-2 self-start rounded-xl bg-[#f6f8fb] px-3 py-2.5 text-sm font-semibold text-[#182230] hover:bg-[#eaf1ff] transition-colors">
+            <i class="fa-solid fa-location-dot text-[#1769f5]"></i>
+            <span id="current-location-text">Colonia Miravalle, Zona A</span>
+            <i class="fa-solid fa-chevron-right ml-1 text-[10px] text-[#77808d]"></i>
           </button>
-          <div class="hidden sm:flex flex-1 max-w-md relative">
+          <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#77808d] text-sm"></i>
-            <input type="text" id="search-input-desktop" oninput="handleSearch(this.value)" placeholder="Buscar taladro, carpa, hidrolavadora..." class="w-full bg-[#f6f8fb] border border-black/10 rounded-full pl-10 pr-4 py-2.5 text-sm text-[#182230]" aria-label="Buscar objetos en la ronda">
+            <input type="text" id="search-input-desktop" oninput="handleSearch(this.value)" placeholder="Buscar herramientas, objetos, artículos..." class="w-full bg-[#f6f8fb] border border-black/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#182230]" aria-label="Buscar objetos en la ronda">
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="openNotificationToast()" class="relative w-10 h-10 rounded-full bg-[#f6f8fb] border border-black/5 flex items-center justify-center text-[#182230] hover:text-[#1769f5]" aria-label="Notificaciones"><i class="fa-regular fa-bell text-lg"></i><span class="absolute top-2 right-2 w-2 h-2 bg-[#1769f5] rounded-full ring-2 ring-white"></span></button>
-            <button onclick="switchTab('tab-publish')" class="flex items-center gap-2 bg-[#1769f5] hover:bg-[#0c4fca] text-white px-4 py-2.5 rounded-full font-semibold text-sm transition-all"><i class="fa-solid fa-plus"></i><span>Compartir objeto</span></button>
-          </div>
-        </div>
-        <div class="sm:hidden mt-3 relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#77808d] text-sm"></i>
-          <input type="text" id="search-input-mobile" oninput="handleSearch(this.value)" placeholder="Buscar herramientas, camping, hogar..." class="w-full bg-[#f6f8fb] border border-black/10 rounded-full pl-10 pr-4 py-2.5 text-sm text-[#182230]" aria-label="Buscar objetos en la ronda">
+          <button onclick="switchTab('tab-publish')" class="flex items-center justify-center gap-2 bg-[#1769f5] hover:bg-[#0c4fca] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shrink-0">
+            <i class="fa-solid fa-plus"></i><span>Añadir objeto</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1530,17 +1553,47 @@
       `).join('');
     }
 
-    // --- Collapsible top menu ---
-    function toggleTopMenu() {
+    // --- Compact navigation menu and scroll behavior ---
+    function toggleTopMenu(forceState) {
       const panel = document.getElementById('top-menu-panel');
       const toggle = document.getElementById('top-menu-toggle');
       const chevron = document.getElementById('top-menu-chevron');
       if (!panel || !toggle) return;
-      const willOpen = panel.classList.contains('hidden');
-      panel.classList.toggle('hidden', !willOpen);
+      const willOpen = typeof forceState === 'boolean' ? forceState : !panel.classList.contains('is-open');
+      panel.classList.toggle('is-open', willOpen);
       toggle.setAttribute('aria-expanded', String(willOpen));
+      panel.setAttribute('aria-hidden', String(!willOpen));
       if (chevron) chevron.style.transform = willOpen ? 'rotate(180deg)' : 'rotate(0deg)';
     }
+
+    function changeLocation() {
+      showToast('La selección de ubicación estará disponible próximamente.');
+    }
+
+    (function setupSmartHeader() {
+      let lastScrollY = window.scrollY;
+      let ticking = false;
+      const header = document.getElementById('top-header');
+      if (!header) return;
+      window.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY;
+          const movingDown = currentY > lastScrollY;
+          if (currentY < 40 || !movingDown) {
+            header.classList.remove('nav-hidden');
+          } else if (currentY - lastScrollY > 3) {
+            header.classList.add('nav-hidden');
+            if (document.getElementById('top-menu-panel')?.classList.contains('is-open')) {
+              toggleTopMenu(false);
+            }
+          }
+          lastScrollY = currentY;
+          ticking = false;
+        });
+      }, { passive: true });
+    })();
 
     // --- Toast Helper ---
     function showToast(msg) {
