@@ -126,65 +126,6 @@
       box-shadow: 0 0 0 4px rgba(23,105,245,.09);
     }
     #main-content { padding-top: 30px !important; }
-    .feed-intro {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 188px;
-      overflow: hidden;
-      padding: 30px 34px;
-      border-radius: 26px;
-      color: white;
-      background: linear-gradient(112deg, #145de0 0%, #2879fa 58%, #5798ff 100%);
-      box-shadow: 0 16px 34px rgba(23,105,245,.16);
-      isolation: isolate;
-    }
-    .feed-intro::before, .feed-intro::after {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .feed-intro::before { width: 310px; height: 310px; right: 8%; top: -190px; }
-    .feed-intro::after { width: 230px; height: 230px; right: 12%; bottom: -180px; }
-    .feed-intro-copy { max-width: 600px; }
-    .feed-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin-bottom: 13px;
-      color: rgba(255,255,255,.82);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .15em;
-    }
-    .feed-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #a9f0d0; box-shadow: 0 0 0 4px rgba(169,240,208,.15); }
-    .feed-intro h1 {
-      margin: 0;
-      color: #fff;
-      font-size: clamp(27px, 4vw, 39px);
-      font-weight: 800;
-      line-height: 1.12;
-      letter-spacing: -.055em;
-    }
-    .feed-intro p { margin-top: 11px; color: rgba(255,255,255,.84); font-size: 14px; }
-    .feed-intro-mark {
-      display: grid;
-      place-items: center;
-      width: 112px;
-      height: 112px;
-      margin-right: 5%;
-      border: 1px solid rgba(255,255,255,.24);
-      border-radius: 32px;
-      background: rgba(255,255,255,.12);
-      color: rgba(255,255,255,.95);
-      font-size: 44px;
-      transform: rotate(7deg);
-      backdrop-filter: blur(8px);
-    }
     #tab-feed > div:first-of-type:not(.feed-intro) { margin-top: 2px; }
     #tab-feed h2 { letter-spacing: -.035em; }
     .cat-chip {
@@ -260,75 +201,30 @@
 <body class="min-h-screen flex flex-col pb-24 md:pb-0">
 
   <!-- ==================== HEADER / TOP NAVIGATION ==================== -->
-  <header class="sticky top-0 z-40 bg-[#efede7]/95 backdrop-blur-md border-b border-black/10 px-4 py-3 shadow-sm">
-    <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
-      
-      <!-- Brand & Location -->
-      <div class="flex items-center gap-3">
-        <button onclick="switchTab('tab-feed')" class="flex items-center gap-2 group text-left">
-          <div class="w-10 h-10 rounded-xl bg-[#0066ff] flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
-            R
+  <header id="top-header" class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/5 px-4 py-2">
+    <div class="max-w-5xl mx-auto">
+      <button id="top-menu-toggle" type="button" onclick="toggleTopMenu()" aria-expanded="false" aria-controls="top-menu-panel" class="mx-auto flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-[#1a1a1a] shadow-sm hover:border-[#0066ff]/30 hover:text-[#0066ff] transition-colors">
+        <i class="fa-solid fa-sliders"></i><span>Menú y ubicación</span><i id="top-menu-chevron" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+      </button>
+      <div id="top-menu-panel" class="hidden max-w-5xl mx-auto pt-4 pb-2">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <button onclick="switchTab('tab-feed')" class="flex items-center gap-2 group text-left">
+            <span class="w-10 h-10 rounded-xl bg-[#1769f5] flex items-center justify-center text-white font-extrabold text-xl shadow-sm">R</span>
+            <span><span class="flex items-center gap-1 font-extrabold text-lg tracking-tight text-[#182230]">Ronda <i class="fa-solid fa-circle-check text-[#1769f5] text-xs" title="Red Vecinal"></i></span><span class="block text-xs text-[#77808d]"><i class="fa-solid fa-location-dot text-[#1769f5] mr-1"></i><span id="current-location-text">Colonia Miravalle, Zona A</span></span></span>
+          </button>
+          <div class="hidden sm:flex flex-1 max-w-md relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#77808d] text-sm"></i>
+            <input type="text" id="search-input-desktop" oninput="handleSearch(this.value)" placeholder="Buscar taladro, carpa, hidrolavadora..." class="w-full bg-[#f6f8fb] border border-black/10 rounded-full pl-10 pr-4 py-2.5 text-sm text-[#182230]" aria-label="Buscar objetos en la ronda">
           </div>
-          <div>
-            <div class="flex items-center gap-1">
-              <span class="font-extrabold text-xl tracking-tight text-[#1a1a1a]">Ronda</span>
-              <i class="fa-solid fa-circle-check text-[#0066ff] text-xs" title="Red Vecinal Verificada"></i>
-            </div>
-            <p class="text-xs text-[#666666] font-medium flex items-center gap-1">
-              <i class="fa-solid fa-location-dot text-[#0066ff] text-[10px]"></i>
-              <span id="current-location-text">Colonia Miravalle, Zona A</span>
-              <i class="fa-solid fa-chevron-down text-[9px]"></i>
-            </p>
+          <div class="flex items-center gap-2">
+            <button onclick="openNotificationToast()" class="relative w-10 h-10 rounded-full bg-[#f6f8fb] border border-black/5 flex items-center justify-center text-[#182230] hover:text-[#1769f5]" aria-label="Notificaciones"><i class="fa-regular fa-bell text-lg"></i><span class="absolute top-2 right-2 w-2 h-2 bg-[#1769f5] rounded-full ring-2 ring-white"></span></button>
+            <button onclick="switchTab('tab-publish')" class="flex items-center gap-2 bg-[#1769f5] hover:bg-[#0c4fca] text-white px-4 py-2.5 rounded-full font-semibold text-sm transition-all"><i class="fa-solid fa-plus"></i><span>Compartir objeto</span></button>
           </div>
-        </button>
-      </div>
-
-      <!-- Search Bar (Desktop / Tablet) -->
-      <div class="hidden sm:flex flex-1 max-w-md relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666] text-sm"></i>
-        <input 
-          type="text" 
-          id="search-input-desktop"
-          oninput="handleSearch(this.value)"
-          placeholder="Buscar taladro, carpa, hidrolavadora..." 
-          class="w-full bg-white border border-black/10 rounded-full pl-10 pr-4 py-2 text-sm text-[#1a1a1a] placeholder-[#666666] focus:outline-none focus:border-[#0066ff]"
-          aria-label="Buscar objetos en la ronda"
-        >
-      </div>
-
-      <!-- Header Actions -->
-      <div class="flex items-center gap-2">
-        <button 
-          onclick="openNotificationToast()"
-          class="relative w-11 h-11 rounded-full bg-white border border-black/10 flex items-center justify-center text-[#1a1a1a] hover:bg-[#e6f0ff] hover:text-[#0066ff] transition-colors" 
-          aria-label="Notificaciones"
-        >
-          <i class="fa-regular fa-bell text-lg"></i>
-          <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-[#0066ff] rounded-full ring-2 ring-[#efede7]"></span>
-        </button>
-        
-        <button 
-          onclick="switchTab('tab-publish')"
-          class="hidden md:flex items-center gap-2 bg-[#0066ff] hover:bg-[#0052cc] text-white px-4 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm active:scale-95"
-        >
-          <i class="fa-solid fa-plus"></i>
-          <span>Compartir Objeto</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Mobile Search Bar -->
-    <div class="sm:hidden mt-2.5">
-      <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666] text-sm"></i>
-        <input 
-          type="text" 
-          id="search-input-mobile"
-          oninput="handleSearch(this.value)"
-          placeholder="Buscar herramientas, camping, hogar..." 
-          class="w-full bg-white border border-black/10 rounded-full pl-10 pr-4 py-2 text-sm text-[#1a1a1a] placeholder-[#666666] focus:outline-none focus:border-[#0066ff]"
-          aria-label="Buscar objetos en la ronda"
-        >
+        </div>
+        <div class="sm:hidden mt-3 relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#77808d] text-sm"></i>
+          <input type="text" id="search-input-mobile" oninput="handleSearch(this.value)" placeholder="Buscar herramientas, camping, hogar..." class="w-full bg-[#f6f8fb] border border-black/10 rounded-full pl-10 pr-4 py-2.5 text-sm text-[#182230]" aria-label="Buscar objetos en la ronda">
+        </div>
       </div>
     </div>
   </header>
@@ -338,17 +234,6 @@
 
     <!-- ==================== TAB 1: FEED & EXPLORE ==================== -->
     <section id="tab-feed" class="tab-content space-y-6">\n
-      <!-- Feed introduction -->
-      <div class="feed-intro">
-        <div class="feed-intro-copy">
-          <span class="feed-eyebrow"><span class="feed-eyebrow-dot"></span> TU COMUNIDAD, MÁS CERCA</span>
-          <h1>Lo que necesitas,<br class="hidden sm:block"> está más cerca.</h1>
-          <p>Descubre objetos que tus vecinos tienen para compartir.</p>
-        </div>
-        <div class="feed-intro-mark" aria-hidden="true"><i class="fa-solid fa-handshake-angle"></i></div>
-      </div>
-
-      
       <!-- Neighbor Stories / "Vecinos Activos" (Instagram-style) -->
       <div>
         <div class="flex items-center justify-between mb-3 px-1">
@@ -1648,6 +1533,18 @@
           </span>
         </div>
       `).join('');
+    }
+
+    // --- Collapsible top menu ---
+    function toggleTopMenu() {
+      const panel = document.getElementById('top-menu-panel');
+      const toggle = document.getElementById('top-menu-toggle');
+      const chevron = document.getElementById('top-menu-chevron');
+      if (!panel || !toggle) return;
+      const willOpen = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !willOpen);
+      toggle.setAttribute('aria-expanded', String(willOpen));
+      if (chevron) chevron.style.transform = willOpen ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
     // --- Toast Helper ---
