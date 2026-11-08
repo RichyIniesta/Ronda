@@ -1567,7 +1567,11 @@
     }
 
     function changeLocation() {
-      showToast('La selección de ubicación estará disponible próximamente.');
+      const current = document.getElementById('current-location-text');
+      const nextLocation = window.prompt('Escribe tu colonia o zona:', current?.textContent || '');
+      if (!nextLocation || !nextLocation.trim()) return;
+      if (current) current.textContent = nextLocation.trim();
+      showToast('Ubicación actualizada.');
     }
 
     (function setupSmartHeader() {
