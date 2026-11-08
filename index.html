@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronda: La Red Vecinal de Activos Compartidos</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#0066ff',
+              hover: '#0052cc',
+              light: '#e6f0ff',
+              surface: '#efede7',
+              dark: '#1a1a1a',
+              muted: '#666666'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Global style resets & custom styling */
+    body {
+      background-color: #efede7;
+      color: #1a1a1a;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Accessibility Focus Outline */
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid #0066ff !important;
+      outline-offset: 2px !important;
+    }
+
+    /* Custom Scrollbars */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Shared interaction and responsive refinements */
+    html { scroll-behavior: smooth; }
+    body { overflow-x: hidden; }
+    button, input, select, textarea { font: inherit; }
+    button { touch-action: manipulation; }
+    img { max-width: 100%; }
+    .tab-content { min-width: 0; }
+    #items-grid > article { min-width: 0; }
+    #chat-threads-container, #room-messages-stream { overscroll-behavior: contain; }
+    #room-messages-stream { min-height: 0; }
+    @media (max-width: 767px) {
+      #chat-list-panel, #chat-room-panel { min-height: calc(100dvh - 190px); }
+      #chat-room-panel { width: 100%; }
+      #room-reservation-banner { flex-wrap: wrap; }
+      #room-reservation-banner > div { min-width: 0; flex-wrap: wrap; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    /* Chat bubble tail accents */
+    .chat-bubble-user {
+      border-bottom-right-radius: 2px;
+    }
+    .chat-bubble-owner {
+      border-bottom-left-radius: 2px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-24 md:pb-0">
+
+  <!-- ==================== HEADER / TOP NAVIGATION ==================== -->
+  <header class="sticky top-0 z-40 bg-[#efede7]/95 backdrop-blur-md border-b border-black/10 px-4 py-3 shadow-sm">
+    <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand & Location -->
+      <div class="flex items-center gap-3">
+        <button onclick="switchTab('tab-feed')" class="flex items-center gap-2 group text-left">
+          <div class="w-10 h-10 rounded-xl bg-[#0066ff] flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+            R
+          </div>
+          <div>
+            <div class="flex items-center gap-1">
+              <span class="font-extrabold text-xl tracking-tight text-[#1a1a1a]">Ronda</span>
+              <i class="fa-solid fa-circle-check text-[#0066ff] text-xs" title="Red Vecinal Verificada"></i>
+            </div>
+            <p class="text-xs text-[#666666] font-medium flex items-center gap-1">
+              <i class="fa-solid fa-location-dot text-[#0066ff] text-[10px]"></i>
+              <span id="current-location-text">Colonia Miravalle, Zona A</span>
+              <i class="fa-solid fa-chevron-down text-[9px]"></i>
+            </p>
+          </div>
+        </button>
+      </div>
+
+      <!-- Search Bar (Desktop / Tablet) -->
+      <div class="hidden sm:flex flex-1 max-w-md relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666] text-sm"></i>
+        <input 
+          type="text" 
+          id="search-input-desktop"
+          oninput="handleSearch(this.value)"
+          placeholder="Buscar taladro, carpa, hidrolavadora..." 
+          class="w-full bg-white border border-black/10 rounded-full pl-10 pr-4 py-2 text-sm text-[#1a1a1a] placeholder-[#666666] focus:outline-none focus:border-[#0066ff]"
+          aria-label="Buscar objetos en la ronda"
+        >
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-2">
+        <button 
+          onclick="openNotificationToast()"
+          class="relative w-11 h-11 rounded-full bg-white border border-black/10 flex items-center justify-center text-[#1a1a1a] hover:bg-[#e6f0ff] hover:text-[#0066ff] transition-colors" 
+          aria-label="Notificaciones"
+        >
+          <i class="fa-regular fa-bell text-lg"></i>
+          <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-[#0066ff] rounded-full ring-2 ring-[#efede7]"></span>
+        </button>
+        
+        <button 
+          onclick="switchTab('tab-publish')"
+          class="hidden md:flex items-center gap-2 bg-[#0066ff] hover:bg-[#0052cc] text-white px-4 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm active:scale-95"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Compartir Objeto</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Search Bar -->
+    <div class="sm:hidden mt-2.5">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666] text-sm"></i>
+        <input 
+          type="text" 
+          id="search-input-mobile"
+          oninput="handleSearch(this.value)"
+          placeholder="Buscar herramientas, camping, hogar..." 
+          class="w-full bg-white border border-black/10 rounded-full pl-10 pr-4 py-2 text-sm text-[#1a1a1a] placeholder-[#666666] focus:outline-none focus:border-[#0066ff]"
+          aria-label="Buscar objetos en la ronda"
+        >
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main id="main-content" class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 lg:p-6">
+
+    <!-- ==================== TAB 1: FEED & EXPLORE ==================== -->
+    <section id="tab-feed" class="tab-content space-y-6">
+      
+      <!-- Neighbor Stories / "Vecinos Activos" (Instagram-style) -->
+      <div>
+        <div class="flex items-center justify-between mb-3 px-1">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-[#666666]">Vecinos en la Ronda</h2>
+          <span class="text-xs text-[#0066ff] font-semibold">12 Activos ahora</span>
+        </div>
+        
+        <div class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2 pt-1 px-1">
+          <!-- Create Story -->
+          <button onclick="switchTab('tab-publish')" class="flex flex-col items-center gap-1.5 min-w-[68px] group">
+            <div class="relative w-16 h-16 rounded-full bg-white border-2 border-dashed border-[#0066ff] flex items-center justify-center text-[#0066ff] group-hover:bg-[#e6f0ff] transition-colors">
+              <i class="fa-solid fa-plus text-xl"></i>
+            </div>
+            <span class="text-xs font-medium text-[#1a1a1a] truncate w-16 text-center">Mi Objeto</span>
+          </button>
+
+          <!-- Dynamic Stories -->
+          <div id="stories-container" class="flex items-center gap-4">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Filter Chips -->
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <button onclick="filterCategory('Todos')" class="cat-chip bg-[#0066ff] text-white px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm transition-colors" data-cat="Todos">
+          Todos los Activos
+        </button>
+        <button onclick="filterCategory('Herramientas')" class="cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors" data-cat="Herramientas">
+          🛠️ Herramientas
+        </button>
+        <button onclick="filterCategory('Camping')" class="cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors" data-cat="Camping">
+          ⛺ Camping
+        </button>
+        <button onclick="filterCategory('Hogar')" class="cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors" data-cat="Hogar">
+          🍳 Cocina & Hogar
+        </button>
+        <button onclick="filterCategory('Electrónica')" class="cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors" data-cat="Electrónica">
+          🔌 Electrónica
+        </button>
+        <button onclick="filterCategory('Deportes')" class="cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors" data-cat="Deportes">
+          🚲 Deportes
+        </button>
+      </div>
+
+      <!-- Banner Info (P2P Value Prop) -->
+      <div class="bg-gradient-to-r from-[#0066ff] to-blue-700 rounded-2xl p-4 text-white shadow-md flex items-center justify-between gap-4">
+        <div class="space-y-1">
+          <span class="inline-block bg-white/20 text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full">
+            Economía Colaborativa P2P
+          </span>
+          <h3 class="text-base font-extrabold leading-tight">¿Tienes cosas sin usar en casa?</h3>
+          <p class="text-xs text-white/90">Préstalas a vecinos verificados y genera ingresos seguros.</p>
+        </div>
+        <button onclick="switchTab('tab-publish')" class="bg-white text-[#0066ff] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#e6f0ff] transition-colors shrink-0 shadow-sm">
+          Publicar Ahora
+        </button>
+      </div>
+
+      <!-- Items Grid -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-[#1a1a1a] flex items-center gap-2">
+            <span>Objetos Disponibles Cerca</span>
+            <span id="items-count" class="bg-[#e6f0ff] text-[#0066ff] text-xs font-extrabold px-2 py-0.5 rounded-full">0</span>
+          </h2>
+          <span class="text-xs text-[#666666]">Ordenado por cercanía</span>
+        </div>
+
+        <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamic cards injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: CATEGORIES & DIRECTORY ==================== -->
+    <section id="tab-categories" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-2xl p-5 border border-black/10 space-y-4">
+        <h2 class="text-xl font-extrabold text-[#1a1a1a]">Explorar por Categoría</h2>
+        <p class="text-xs text-[#666666]">Encuentra rápidamente activos ociosos compartidos en Miravalle.</p>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <button onclick="filterCategory('Herramientas'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              🛠️
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Herramientas</h3>
+            <p class="text-xs text-[#666666]">Taladros, podadoras, sierras...</p>
+          </button>
+
+          <button onclick="filterCategory('Camping'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              ⛺
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Camping & Exterior</h3>
+            <p class="text-xs text-[#666666]">Carpas, hieleras, toldos...</p>
+          </button>
+
+          <button onclick="filterCategory('Hogar'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              🍳
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Cocina & Hogar</h3>
+            <p class="text-xs text-[#666666]">Freidoras, hidrolavadoras...</p>
+          </button>
+
+          <button onclick="filterCategory('Electrónica'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              🔌
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Electrónica</h3>
+            <p class="text-xs text-[#666666]">Proyectores, bocinas, consolas...</p>
+          </button>
+
+          <button onclick="filterCategory('Deportes'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              🚲
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Deportes</h3>
+            <p class="text-xs text-[#666666]">Bicicletas, raquetas, kayaks...</p>
+          </button>
+
+          <button onclick="filterCategory('Todos'); switchTab('tab-feed')" class="p-4 rounded-xl border border-black/10 hover:border-[#0066ff] hover:bg-[#e6f0ff]/50 text-left transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-lg font-bold mb-2 group-hover:scale-110 transition-transform">
+              ✨
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">Ver Todo</h3>
+            <p class="text-xs text-[#666666]">Explorar catálogo completo</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- Trust Rules Section -->
+      <div class="bg-[#e6f0ff] rounded-2xl p-5 border border-[#0066ff]/20 space-y-3">
+        <h3 class="font-extrabold text-base text-[#0066ff] flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Garantía de Confianza Ronda</span>
+        </h3>
+        <ul class="text-xs text-[#1a1a1a] space-y-2">
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-check text-[#0066ff] mt-0.5"></i>
+            <span><strong>Vecinos Verificados:</strong> Todos los miembros confirman su dirección oficial.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-check text-[#0066ff] mt-0.5"></i>
+            <span><strong>Depósito en Garantía:</strong> Fondos retenidos hasta la devolución conforme.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fa-solid fa-check text-[#0066ff] mt-0.5"></i>
+            <span><strong>Reputación Mutual:</strong> Calificaciones después de cada préstamo.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: PUBLISH NEW ITEM ==================== -->
+    <section id="tab-publish" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-2xl p-6 border border-black/10 shadow-sm max-w-2xl mx-auto space-y-5">
+        
+        <div class="border-b border-black/10 pb-4">
+          <h2 class="text-xl font-extrabold text-[#1a1a1a] flex items-center gap-2">
+            <i class="fa-solid fa-box-open text-[#0066ff]"></i>
+            <span>Publicar un Objeto en la Ronda</span>
+          </h2>
+          <p class="text-xs text-[#666666] mt-1">Conviértete en prestamista activo. Ayuda a tu comunidad y genera ingresos.</p>
+        </div>
+
+        <form id="publish-form" onsubmit="handlePublishSubmit(event)" class="space-y-4">
+          
+          <div>
+            <label for="pub-title" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+              Título del Objeto *
+            </label>
+            <input 
+              type="text" 
+              id="pub-title" 
+              required
+              placeholder="Ej. Hidrolavadora Kärcher 1800 PSI" 
+              class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+            >
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="pub-category" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+                Categoría *
+              </label>
+              <select 
+                id="pub-category" 
+                required
+                class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+              >
+                <option value="Herramientas">🛠️ Herramientas</option>
+                <option value="Camping">⛺ Camping & Exterior</option>
+                <option value="Hogar">🍳 Cocina & Hogar</option>
+                <option value="Electrónica">🔌 Electrónica</option>
+                <option value="Deportes">🚲 Deportes</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="pub-price" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+                Precio por Día (MXN) *
+              </label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-[#666666]">$</span>
+                <input 
+                  type="number" 
+                  id="pub-price" 
+                  required
+                  min="0"
+                  placeholder="60" 
+                  class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl pl-8 pr-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+                >
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label for="pub-desc" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+              Descripción y Condiciones de Uso
+            </label>
+            <textarea 
+              id="pub-desc" 
+              rows="3"
+              placeholder="Ej. Incluye manguera de 5 metros y dos boquillas. Entrego limpia y con tanque de detergente lleno."
+              class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+            ></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="pub-image" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+                URL de Imagen (Opcional)
+              </label>
+              <input 
+                type="url" 
+                id="pub-image" 
+                placeholder="https://..." 
+                class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+              >
+            </div>
+
+            <div>
+              <label for="pub-distance" class="block text-xs font-bold uppercase tracking-wider text-[#1a1a1a] mb-1.5">
+                Distancia en tu Colonia
+              </label>
+              <input 
+                type="text" 
+                id="pub-distance" 
+                placeholder="A 200 m de ti" 
+                value="A 250 m de ti"
+                class="w-full bg-[#efede7]/50 border border-black/15 rounded-xl px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+              >
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2 flex items-center justify-end gap-3">
+            <button 
+              type="button" 
+              onclick="switchTab('tab-feed')"
+              class="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#666666] hover:bg-[#efede7] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="bg-[#0066ff] hover:bg-[#0052cc] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2"
+            >
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Publicar en la Ronda</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: CHATS & RESERVATIONS (WhatsApp Style) ==================== -->
+    <section id="tab-chats" class="tab-content hidden">
+      <div class="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 min-h-[600px]">
+        
+        <!-- Conversations List (Mobile: toggle view / Desktop: 4 cols) -->
+        <div id="chat-list-panel" class="md:col-span-4 border-r border-black/10 flex flex-col bg-white">
+          
+          <div class="p-4 border-b border-black/10 bg-[#efede7]/30 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-brands fa-whatsapp text-[#0066ff] text-xl"></i>
+              <h2 class="font-extrabold text-base text-[#1a1a1a]">Mensajes & Rondas</h2>
+            </div>
+            <span class="bg-[#0066ff] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+              2 Activos
+            </span>
+          </div>
+
+          <!-- Chat List Items -->
+          <div id="chat-threads-container" class="flex-1 overflow-y-auto divide-y divide-black/5">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Chat Detail Room (Mobile: toggle view / Desktop: 8 cols) -->
+        <div id="chat-room-panel" class="hidden md:flex md:col-span-8 flex-col bg-[#efede7]/20">
+          
+          <!-- Default Empty State (When no chat selected on desktop) -->
+          <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center text-2xl mb-3">
+              <i class="fa-regular fa-comments"></i>
+            </div>
+            <h3 class="font-bold text-base text-[#1a1a1a]">Selecciona una Ronda Activa</h3>
+            <p class="text-xs text-[#666666] max-w-xs mt-1">Coordina entregas, horarios y confirma devoluciones de forma segura.</p>
+          </div>
+
+          <!-- Active Room UI (Hidden until selected) -->
+          <div id="chat-active-room" class="hidden flex-1 flex-col h-full">
+            
+            <!-- Room Top Header -->
+            <div class="p-3.5 bg-white border-b border-black/10 flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-3">
+                <button onclick="backToChatList()" class="md:hidden text-[#0066ff] font-bold pr-1">
+                  <i class="fa-solid fa-arrow-left text-lg"></i>
+                </button>
+                <img id="room-owner-avatar" src="" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-[#0066ff]">
+                <div>
+                  <h3 id="room-owner-name" class="font-bold text-sm text-[#1a1a1a] flex items-center gap-1">
+                    <span>-</span>
+                    <i class="fa-solid fa-circle-check text-[#0066ff] text-xs"></i>
+                  </h3>
+                  <p class="text-[11px] text-[#666666] flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Responde rápido • En línea</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="alert('Llamada cifrada simulated')" class="w-9 h-9 rounded-full bg-[#efede7] flex items-center justify-center text-[#1a1a1a] hover:bg-[#e6f0ff] hover:text-[#0066ff] transition-colors">
+                  <i class="fa-solid fa-phone text-xs"></i>
+                </button>
+                <button onclick="alert('Información del préstamo')" class="w-9 h-9 rounded-full bg-[#efede7] flex items-center justify-center text-[#1a1a1a] hover:bg-[#e6f0ff] hover:text-[#0066ff] transition-colors">
+                  <i class="fa-solid fa-circle-info text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sticky Reservation Summary Banner -->
+            <div id="room-reservation-banner" class="bg-[#e6f0ff] border-b border-[#0066ff]/20 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <!-- Rendered by JS -->
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="room-messages-stream" class="flex-1 p-4 overflow-y-auto space-y-3">
+              <!-- Rendered by JS -->
+            </div>
+
+            <!-- Message Input Area -->
+            <form onsubmit="handleSendMessage(event)" class="p-3 bg-white border-t border-black/10 flex items-center gap-2">
+              <button type="button" class="text-[#666666] hover:text-[#0066ff] p-2 text-lg">
+                <i class="fa-solid fa-paperclip"></i>
+              </button>
+              <input 
+                type="text" 
+                id="room-message-input"
+                placeholder="Escribe un mensaje a tu vecino..." 
+                class="flex-1 bg-[#efede7]/60 border border-black/10 rounded-full px-4 py-2.5 text-sm text-[#1a1a1a] focus:bg-white focus:outline-none focus:border-[#0066ff]"
+              >
+              <button type="submit" class="w-10 h-10 rounded-full bg-[#0066ff] text-white flex items-center justify-center shadow-sm hover:bg-[#0052cc] transition-colors active:scale-95">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+              </button>
+            </form>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: NEIGHBOR PROFILE ==================== -->
+    <section id="tab-profile" class="tab-content hidden space-y-6 max-w-3xl mx-auto">
+      
+      <!-- User Info Card -->
+      <div class="bg-white rounded-2xl p-6 border border-black/10 shadow-sm relative overflow-hidden">
+        <div class="h-24 bg-gradient-to-r from-[#0066ff] to-blue-700 -mx-6 -mt-6 mb-4"></div>
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 relative z-10 -mt-14 mb-4">
+          <div class="flex items-end gap-4">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="Mi Perfil" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md">
+              <span class="absolute bottom-0 right-0 bg-[#0066ff] text-white text-[10px] w-6 h-6 rounded-full flex items-center justify-center border-2 border-white" title="Vecino Verificado">
+                <i class="fa-solid fa-check"></i>
+              </span>
+            </div>
+            <div>
+              <h2 class="text-xl font-extrabold text-[#1a1a1a] flex items-center gap-1.5">
+                <span>María G.</span>
+                <span class="bg-[#e6f0ff] text-[#0066ff] text-xs font-bold px-2 py-0.5 rounded-full">Vecina Pro</span>
+              </h2>
+              <p class="text-xs text-[#666666]">Miembro en Miravalle desde 2024</p>
+            </div>
+          </div>
+
+          <button onclick="alert('Editar Perfil')" class="bg-[#efede7] hover:bg-black/10 text-[#1a1a1a] font-bold text-xs px-4 py-2 rounded-xl transition-colors">
+            Editar Perfil
+          </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-black/10 text-center">
+          <div class="p-2">
+            <span class="block text-lg font-extrabold text-[#0066ff]">14</span>
+            <span class="text-xs text-[#666666]">Préstamos Dados</span>
+          </div>
+          <div class="p-2 border-x border-black/10">
+            <span class="block text-lg font-extrabold text-[#0066ff]">4.98 ★</span>
+            <span class="text-xs text-[#666666]">Reputación</span>
+          </div>
+          <div class="p-2">
+            <span class="block text-lg font-extrabold text-[#0066ff]">$1,450</span>
+            <span class="text-xs text-[#666666]">Ahorrado en Ronda</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verified Address Card -->
+      <div class="bg-white rounded-2xl p-5 border border-black/10 space-y-3">
+        <h3 class="font-extrabold text-sm text-[#1a1a1a] flex items-center gap-2">
+          <i class="fa-solid fa-house-chimney text-[#0066ff]"></i>
+          <span>Domicilio Verificado</span>
+        </h3>
+        <div class="flex items-center justify-between text-xs text-[#666666] bg-[#efede7]/50 p-3 rounded-xl border border-black/5">
+          <div>
+            <p class="font-bold text-[#1a1a1a]">Andador Pedro de Anda #302</p>
+            <p>Sección 2 • Miravalle, Tlaquepaque</p>
+          </div>
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+            <i class="fa-solid fa-shield"></i> Verificado
+          </span>
+        </div>
+      </div>
+
+      <!-- User Active Listings -->
+      <div class="bg-white rounded-2xl p-5 border border-black/10 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-extrabold text-sm text-[#1a1a1a]">Mis Objetos Compartidos</h3>
+          <button onclick="switchTab('tab-publish')" class="text-xs text-[#0066ff] font-bold hover:underline">
+            + Agregar Nuevo
+          </button>
+        </div>
+
+        <div id="user-my-items" class="space-y-2">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== BOTTOM NAVIGATION BAR (Instagram/WhatsApp Style) ==================== -->
+  <nav aria-label="Navegación principal" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-black/10 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-lg md:static md:mt-auto md:border-t-0 md:bg-transparent md:shadow-none">
+    <div class="max-w-5xl mx-auto flex items-center justify-around gap-1">
+      
+      <button 
+        onclick="switchTab('tab-feed')" 
+        class="nav-tab-btn active flex flex-col items-center gap-0.5 p-2 rounded-xl text-[#0066ff] font-bold text-[11px] transition-all"
+        data-tab="tab-feed"
+      >
+        <i class="fa-solid fa-house text-lg"></i>
+        <span>Explora</span>
+      </button>
+
+      <button 
+        onclick="switchTab('tab-categories')" 
+        class="nav-tab-btn flex flex-col items-center gap-0.5 p-2 rounded-xl text-[#666666] hover:text-[#0066ff] font-medium text-[11px] transition-all"
+        data-tab="tab-categories"
+      >
+        <i class="fa-solid fa-layer-group text-lg"></i>
+        <span>Categorías</span>
+      </button>
+
+      <!-- Center Plus Action -->
+      <button 
+        onclick="switchTab('tab-publish')" 
+        class="flex flex-col items-center gap-0.5 p-2 rounded-full bg-[#0066ff] text-white -mt-5 shadow-lg hover:bg-[#0052cc] transition-all active:scale-95"
+        aria-label="Publicar Objeto"
+      >
+        <div class="w-10 h-10 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+      </button>
+
+      <button 
+        onclick="switchTab('tab-chats')" 
+        class="nav-tab-btn flex flex-col items-center gap-0.5 p-2 rounded-xl text-[#666666] hover:text-[#0066ff] font-medium text-[11px] transition-all relative"
+        data-tab="tab-chats"
+      >
+        <div class="relative">
+          <i class="fa-solid fa-comments text-lg"></i>
+          <span class="absolute -top-1 -right-2 bg-[#0066ff] text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center">2</span>
+        </div>
+        <span>Rondas</span>
+      </button>
+
+      <button 
+        onclick="switchTab('tab-profile')" 
+        class="nav-tab-btn flex flex-col items-center gap-0.5 p-2 rounded-xl text-[#666666] hover:text-[#0066ff] font-medium text-[11px] transition-all"
+        data-tab="tab-profile"
+      >
+        <i class="fa-regular fa-user text-lg"></i>
+        <span>Perfil</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- ==================== ITEM DETAILS & BOOKING MODAL ==================== -->
+  <div id="item-modal" role="dialog" aria-modal="true" aria-labelledby="modal-item-title" onclick="if(event.target === this) closeItemModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl my-auto animate-in fade-in zoom-in duration-200">
+      
+      <!-- Modal Header Banner -->
+      <div class="relative h-56 bg-slate-100">
+        <img id="modal-item-img" src="" alt="Objeto" class="w-full h-full object-cover">
+        
+        <button 
+          onclick="closeItemModal()" 
+          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/50 hover:bg-black text-white flex items-center justify-center backdrop-blur-md transition-colors"
+          aria-label="Cerrar modal"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <span id="modal-item-category" class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md text-[#0066ff] font-bold text-xs px-3 py-1 rounded-full shadow-sm">
+          -
+        </span>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+        
+        <!-- Header & Price -->
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 id="modal-item-title" class="text-xl font-extrabold text-[#1a1a1a]">Item Title</h2>
+            <p id="modal-item-distance" class="text-xs text-[#666666] flex items-center gap-1 mt-0.5">
+              <i class="fa-solid fa-location-dot text-[#0066ff]"></i>
+              <span>-</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <span id="modal-item-price" class="text-xl font-extrabold text-[#0066ff] block">$0</span>
+            <span class="text-[11px] text-[#666666]">por día</span>
+          </div>
+        </div>
+
+        <!-- Owner Verification Box -->
+        <div class="bg-[#efede7]/60 rounded-2xl p-3.5 flex items-center justify-between border border-black/5">
+          <div class="flex items-center gap-3">
+            <img id="modal-owner-avatar" src="" alt="Dueño" class="w-11 h-11 rounded-full object-cover border-2 border-[#0066ff]">
+            <div>
+              <h4 id="modal-owner-name" class="font-bold text-sm text-[#1a1a1a] flex items-center gap-1">
+                <span>-</span>
+                <i class="fa-solid fa-circle-check text-[#0066ff] text-xs"></i>
+              </h4>
+              <p id="modal-owner-rating" class="text-xs text-[#666666]">⭐️ 4.9 • 12 préstamos exitosos</p>
+            </div>
+          </div>
+          <button onclick="alert('Ver perfil del vecino')" class="text-xs font-bold text-[#0066ff] hover:underline">
+            Ver Perfil
+          </button>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-[#666666] mb-1">Descripción</h4>
+          <p id="modal-item-desc" class="text-xs text-[#1a1a1a] leading-relaxed">
+            -
+          </p>
+        </div>
+
+        <!-- Date Picker & Rent Calculator -->
+        <div class="bg-[#e6f0ff]/60 border border-[#0066ff]/20 rounded-2xl p-4 space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-[#0066ff] flex items-center gap-1.5">
+            <i class="fa-regular fa-calendar-days"></i>
+            <span>Seleccionar Días de Ronda</span>
+          </h4>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="modal-date-start" class="block text-[11px] font-medium text-[#666666] mb-1">Inicio</label>
+              <input 
+                type="date" 
+                id="modal-date-start" 
+                onchange="syncBookingDateLimits(); calculateModalTotal()"
+                class="w-full bg-white border border-black/10 rounded-xl px-3 py-1.5 text-xs font-semibold text-[#1a1a1a] focus:outline-none focus:border-[#0066ff]"
+              >
+            </div>
+            <div>
+              <label for="modal-date-end" class="block text-[11px] font-medium text-[#666666] mb-1">Devolución</label>
+              <input 
+                type="date" 
+                id="modal-date-end" 
+                onchange="calculateModalTotal()"
+                class="w-full bg-white border border-black/10 rounded-xl px-3 py-1.5 text-xs font-semibold text-[#1a1a1a] focus:outline-none focus:border-[#0066ff]"
+              >
+            </div>
+          </div>
+
+          <!-- Total Calculation breakdown -->
+          <div class="pt-2 border-t border-[#0066ff]/15 flex items-center justify-between text-xs">
+            <span id="modal-days-calc" class="text-[#666666]">Total estimado (1 día):</span>
+            <span id="modal-total" class="font-extrabold text-sm text-[#0066ff]">$0 MXN</span>
+          </div>
+        </div>
+
+        <!-- Terms Note -->
+        <p class="text-[11px] text-[#666666] flex items-center gap-1.5">
+          <i class="fa-solid fa-lock text-[#0066ff]"></i>
+          <span>Reserva protegida por Depósito de Garantía Ronda.</span>
+        </p>
+
+      </div>
+
+      <!-- Modal Footer CTA -->
+      <div class="p-4 bg-white border-t border-black/10 flex items-center gap-3">
+        <button 
+          onclick="closeItemModal()"
+          class="flex-1 py-3 rounded-xl border border-black/10 text-xs font-bold text-[#666666] hover:bg-[#efede7] transition-colors"
+        >
+          Cancelar
+        </button>
+        <button 
+          id="modal-submit-btn"
+          onclick="confirmBookingFromModal()"
+          class="flex-[2] py-3 rounded-xl bg-[#0066ff] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Solicitar Ronda</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="fixed top-5 right-5 z-50 bg-[#1a1a1a] text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl hidden flex items-center gap-2 border border-white/10 animate-bounce">
+    <i class="fa-solid fa-circle-check text-[#0066ff]"></i>
+    <span id="toast-message">Notificación</span>
+  </div>
+
+  <!-- ==================== APPLICATION STATE & SCRIPT ==================== -->
+  <script>
+    // --- Application State & Initial Mock Data ---
+    const STATE = {
+      currentTab: 'tab-feed',
+      activeFilter: 'Todos',
+      searchQuery: '',
+      activeChatId: 'chat-1',
+      selectedItemForBooking: null,
+      
+      // Neighborhood Stories
+      stories: [
+        { id: 's1', name: 'Don Pedro', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', active: true },
+        { id: 's2', name: 'Ana M.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80', active: true },
+        { id: 's3', name: 'Carlos R.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', active: true },
+        { id: 's4', name: 'Sofía M.', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80', active: true },
+        { id: 's5', name: 'Luis K.', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', active: false },
+      ],
+
+      // Feed Items Data
+      items: [
+        {
+          id: 'item-1',
+          title: 'Taladro Inalámbrico Bosch 18V + Brocas',
+          category: 'Herramientas',
+          price: 50,
+          distance: 'A 300 m de ti',
+          rating: '4.9',
+          loansCount: 12,
+          ownerName: 'Carlos R.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop&q=80',
+          desc: 'Excelente taladro percutor inalámbrico con 2 baterías cargadas y juego completo de brocas para concreto y madera.'
+        },
+        {
+          id: 'item-2',
+          title: 'Carpa de Camping Coleman (4 Personas)',
+          category: 'Camping',
+          price: 100,
+          distance: 'A 500 m de ti',
+          rating: '5.0',
+          loansCount: 8,
+          ownerName: 'Sofía M.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&auto=format&fit=crop&q=80',
+          desc: 'Impermeable, fácil de armar en 10 minutos. Incluye varillas de repuesto y bolso de transporte limpio.'
+        },
+        {
+          id: 'item-3',
+          title: 'Hidrolavadora de Alta Presión Kärcher',
+          category: 'Hogar',
+          price: 80,
+          distance: 'A 150 m de ti',
+          rating: '4.8',
+          loansCount: 15,
+          ownerName: 'Don Pedro',
+          ownerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80',
+          desc: 'Ideal para lavar cocheras, autos o fachadas. Presión regulable de 1600 PSI.'
+        },
+        {
+          id: 'item-4',
+          title: 'Proyector Portátil HD + Pantalla 100"',
+          category: 'Electrónica',
+          price: 120,
+          distance: 'A 400 m de ti',
+          rating: '4.95',
+          loansCount: 19,
+          ownerName: 'Ana M.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=600&auto=format&fit=crop&q=80',
+          desc: 'Perfecto para noche de películas al aire libre en el jardín. Entradas HDMI, USB y Bluetooth.'
+        },
+        {
+          id: 'item-5',
+          title: 'Bicicleta de Montaña Rodada 29',
+          category: 'Deportes',
+          price: 70,
+          distance: 'A 600 m de ti',
+          rating: '4.7',
+          loansCount: 6,
+          ownerName: 'Luis K.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+          image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600&auto=format&fit=crop&q=80',
+          desc: 'Frenos de disco, 21 velocidades Shimano. Incluye casco y candado de seguridad.'
+        }
+      ],
+
+      // Chats & Reservation Streams Data
+      chats: [
+        {
+          id: 'chat-1',
+          itemId: 'item-1',
+          itemTitle: 'Taladro Inalámbrico Bosch',
+          ownerName: 'Carlos R.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+          status: 'ACEPTADO', // ACEPTADO, PENDIENTE, CONCLUIDO
+          days: 2,
+          totalPrice: 100,
+          dates: '15 Nov - 16 Nov',
+          messages: [
+            { sender: 'owner', text: '¡Hola María! Ya recibí la solicitud para el taladro.', time: '10:14 AM' },
+            { sender: 'user', text: '¡Hola Carlos! Sí, lo necesito para colocar unos repisas hoy en la tarde.', time: '10:15 AM' },
+            { sender: 'owner', text: 'Perfecto. Te lo entregó en mi casa (Andador Pedro de Anda #204) a las 5 PM.', time: '10:16 AM' }
+          ]
+        },
+        {
+          id: 'chat-2',
+          itemId: 'item-2',
+          itemTitle: 'Carpa de Camping Coleman',
+          ownerName: 'Sofía M.',
+          ownerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
+          status: 'PENDIENTE',
+          days: 3,
+          totalPrice: 300,
+          dates: '20 Nov - 22 Nov',
+          messages: [
+            { sender: 'user', text: 'Hola Sofía, solicité tu carpa para el próximo fin de semana.', time: 'Ayer' },
+            { sender: 'owner', text: '¡Hola! Revisando mi calendario vecinal. En breve confirmo.', time: 'Ayer' }
+          ]
+        }
+      ]
+    };
+
+    // --- DOM Loaded Initialization ---
+    document.addEventListener('keydown', event => {
+      if (event.key === "Escape") {
+        const modal = document.getElementById("item-modal");
+        if (modal && !modal.classList.contains("hidden")) closeItemModal();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderStories();
+      renderItems();
+      renderChatThreads();
+      renderUserMyItems();
+      setupDefaultModalDates();
+    });
+
+    // --- Tab Navigation ---
+    function switchTab(tabId) {
+      const activeSection = document.getElementById(tabId);
+      if (!activeSection || !activeSection.classList.contains("tab-content")) return;
+      STATE.currentTab = tabId;
+
+      // Update visible tab sections
+      document.querySelectorAll('.tab-content').forEach(section => {
+        section.classList.add('hidden');
+      });
+      activeSection.classList.remove('hidden');
+
+      // Update bottom nav button active states
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabId) {
+          btn.classList.add('text-[#0066ff]', 'font-bold');
+          btn.setAttribute("aria-current", "page");
+          btn.classList.remove('text-[#666666]', 'font-medium');
+        } else {
+          btn.classList.remove('text-[#0066ff]', 'font-bold');
+          btn.removeAttribute("aria-current");
+          btn.classList.add('text-[#666666]', 'font-medium');
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+
+    // --- Stories Component Rendering ---
+    function renderStories() {
+      const container = document.getElementById('stories-container');
+      container.innerHTML = STATE.stories.map(story => `
+        <div onclick="showToast('Ronda de ${story.name} activa')" class="flex flex-col items-center gap-1.5 min-w-[68px] cursor-pointer group">
+          <div class="relative w-16 h-16 rounded-full p-0.5 ${story.active ? 'bg-gradient-to-tr from-[#0066ff] to-cyan-400' : 'bg-black/20'}">
+            <img src="${story.avatar}" alt="${story.name}" class="w-full h-full rounded-full object-cover border-2 border-[#efede7] group-hover:scale-105 transition-transform">
+          </div>
+          <span class="text-xs font-medium text-[#1a1a1a] truncate w-16 text-center">${story.name}</span>
+        </div>
+      `).join('');
+    }
+
+    // --- Filter Categories ---
+    function filterCategory(cat) {
+      STATE.activeFilter = cat;
+      
+      // Update filter chips styling
+      document.querySelectorAll('.cat-chip').forEach(btn => {
+        const isMatch = btn.dataset.cat === cat || (cat === 'Todos' && !btn.dataset.cat);
+        if (isMatch) {
+          btn.className = 'cat-chip bg-[#0066ff] text-white px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap shadow-sm transition-colors';
+        } else {
+          btn.className = 'cat-chip bg-white border border-black/10 hover:border-[#0066ff] text-[#1a1a1a] px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors';
+        }
+      });
+
+      renderItems();
+    }
+
+    // --- Global Search Input Handler ---
+    function handleSearch(query) {
+      STATE.searchQuery = query.toLowerCase().trim();
+      ["search-input-desktop", "search-input-mobile"].forEach(id => {
+        const input = document.getElementById(id);
+        if (input && input.value !== query) input.value = query;
+      });
+      renderItems();
+    }
+
+    // --- Render Items Feed ---
+    function renderItems() {
+      const grid = document.getElementById('items-grid');
+      const countLabel = document.getElementById('items-count');
+
+      // Filter by category and search term
+      const filtered = STATE.items.filter(item => {
+        const matchesCat = STATE.activeFilter === 'Todos' || item.category === STATE.activeFilter;
+        const matchesSearch = !STATE.searchQuery || 
+          item.title.toLowerCase().includes(STATE.searchQuery) ||
+          item.desc.toLowerCase().includes(STATE.searchQuery) ||
+          item.ownerName.toLowerCase().includes(STATE.searchQuery);
+        return matchesCat && matchesSearch;
+      });
+
+      countLabel.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center bg-white rounded-2xl border border-black/10 space-y-3">
+            <div class="w-12 h-12 rounded-full bg-[#e6f0ff] text-[#0066ff] flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#1a1a1a]">No se encontraron activos</h3>
+            <p class="text-xs text-[#666666]">Intenta buscar con otros términos o cambia la categoría.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => `
+        <article class="bg-white rounded-2xl border border-black/10 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+          <div>
+            <!-- Image Header -->
+            <div class="relative h-48 bg-slate-100 overflow-hidden">
+              <img 
+                src="${item.image}" 
+                alt="${item.title}" 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80'"
+              >
+              <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-[#0066ff] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
+                ${item.category}
+              </span>
+              <span class="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                ⭐️ ${item.rating} (${item.loansCount})
+              </span>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 space-y-2">
+              <div class="flex items-center justify-between text-xs text-[#666666]">
+                <span class="flex items-center gap-1">
+                  <i class="fa-solid fa-location-dot text-[#0066ff]"></i>
+                  ${item.distance}
+                </span>
+                <span class="font-medium">Vecino verificado</span>
+              </div>
+
+              <h3 class="font-extrabold text-base text-[#1a1a1a] leading-snug line-clamp-2">
+                ${item.title}
+              </h3>
+
+              <!-- Owner -->
+              <div class="flex items-center gap-2 pt-1">
+                <img src="${item.ownerAvatar}" alt="${item.ownerName}" class="w-6 h-6 rounded-full object-cover border border-[#0066ff]">
+                <span class="text-xs font-semibold text-[#1a1a1a] flex items-center gap-1">
+                  ${item.ownerName}
+                  <i class="fa-solid fa-circle-check text-[#0066ff] text-[10px]"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer & Actions -->
+          <div class="p-4 pt-2 border-t border-black/5 flex items-center justify-between gap-2 bg-[#efede7]/20">
+            <div>
+              <span class="text-lg font-extrabold text-[#0066ff]">$${item.price} MXN</span>
+              <span class="text-[10px] text-[#666666] block -mt-1">/ día</span>
+            </div>
+
+            <button 
+              onclick="openItemModal('${item.id}')"
+              class="bg-[#0066ff] hover:bg-[#0052cc] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
+            >
+              <span>Solicitar Ronda</span>
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    // --- Modal Item Details & Booking ---
+    function openItemModal(itemId) {
+      const item = STATE.items.find(i => i.id === itemId);
+      if (!item) return;
+
+      STATE.selectedItemForBooking = item;
+
+      document.getElementById('modal-item-img').src = item.image;
+      document.getElementById('modal-item-title').textContent = item.title;
+      document.getElementById('modal-item-category').textContent = item.category;
+      document.getElementById('modal-item-distance').querySelector('span').textContent = item.distance;
+      document.getElementById('modal-item-price').textContent = `$${item.price} MXN`;
+      document.getElementById('modal-item-desc').textContent = item.desc;
+
+      document.getElementById('modal-owner-name').querySelector('span').textContent = item.ownerName;
+      document.getElementById('modal-owner-avatar').src = item.ownerAvatar;
+      document.getElementById('modal-owner-rating').textContent = `⭐️ ${item.rating} • ${item.loansCount} préstamos exitosos`;
+
+      calculateModalTotal();
+
+      const modal = document.getElementById('item-modal');
+      syncBookingDateLimits();
+      modal.classList.remove('hidden');
+      document.getElementById('modal-date-start').focus();
+    }
+
+    function closeItemModal() {
+      document.getElementById('item-modal').classList.add('hidden');
+      STATE.selectedItemForBooking = null;
+    }
+
+    function syncBookingDateLimits() {
+      const start = document.getElementById('modal-date-start');
+      const end = document.getElementById('modal-date-end');
+      if (!start || !end) return;
+      end.min = start.value || start.min;
+      if (end.value && start.value && end.value <= start.value) {
+        end.value = '';
+      }
+    }
+
+    function formatLocalDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function setupDefaultModalDates() {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const start = document.getElementById('modal-date-start');
+      const end = document.getElementById('modal-date-end');
+      start.min = formatLocalDate(today);
+      start.value = formatLocalDate(today);
+      end.value = formatLocalDate(tomorrow);
+      syncBookingDateLimits();
+    }
+
+    function calculateModalTotal() {
+      if (!STATE.selectedItemForBooking) return;
+
+      const startVal = document.getElementById('modal-date-start').value;
+      const endVal = document.getElementById('modal-date-end').value;
+
+      if (!startVal || !endVal) return;
+
+      if (!startVal || !endVal || endVal <= startVal) {
+        document.getElementById('modal-days-calc').textContent = 'Selecciona una fecha de devolución posterior.';
+        document.getElementById('modal-total').textContent = '—';
+        return;
+      }
+      const [sy, sm, sd] = startVal.split('-').map(Number);
+      const [ey, em, ed] = endVal.split('-').map(Number);
+      const startDate = Date.UTC(sy, sm - 1, sd);
+      const endDate = Date.UTC(ey, em - 1, ed);
+      const diffDays = Math.round((endDate - startDate) / 86400000);
+
+      const pricePerDay = STATE.selectedItemForBooking.price;
+      const total = diffDays * pricePerDay;
+
+      document.getElementById('modal-days-calc').textContent = `Total estimado (${diffDays} día${diffDays > 1 ? 's' : ''}):`;
+      document.getElementById('modal-total').textContent = `$${total} MXN`;
+    }
+
+    function confirmBookingFromModal() {
+      if (!STATE.selectedItemForBooking) return;
+
+      const item = STATE.selectedItemForBooking;
+      const startVal = document.getElementById('modal-date-start').value;
+      const endVal = document.getElementById('modal-date-end').value;
+
+      if (!startVal || !endVal || endVal <= startVal) {
+        showToast('Selecciona una fecha de devolución posterior al inicio.');
+        return;
+      }
+      const [sy, sm, sd] = startVal.split('-').map(Number);
+      const [ey, em, ed] = endVal.split('-').map(Number);
+      const diffDays = Math.round((Date.UTC(ey, em - 1, ed) - Date.UTC(sy, sm - 1, sd)) / 86400000);
+
+      const totalPrice = diffDays * item.price;
+
+      // Create new chat room entry
+      const newChatId = 'chat-' + Date.now();
+      const newChat = {
+        id: newChatId,
+        itemId: item.id,
+        itemTitle: item.title,
+        ownerName: item.ownerName,
+        ownerAvatar: item.ownerAvatar,
+        status: 'PENDIENTE',
+        days: diffDays,
+        totalPrice: totalPrice,
+        dates: `${startVal} a ${endVal}`,
+        messages: [
+          { sender: 'user', text: `¡Hola ${item.ownerName}! He solicitado el préstamo de tu ${item.title} por ${diffDays} día(s).`, time: 'Ahora' }
+        ]
+      };
+
+      STATE.chats.unshift(newChat);
+      renderChatThreads();
+      closeItemModal();
+
+      showToast(`¡Solicitud enviada a ${item.ownerName}!`);
+      switchTab('tab-chats');
+      openChatRoom(newChatId);
+    }
+
+    // --- Chat Room Components & Functionality ---
+    function renderChatThreads() {
+      const container = document.getElementById('chat-threads-container');
+      container.innerHTML = STATE.chats.map(chat => {
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        const isSelected = chat.id === STATE.activeChatId;
+
+        return `
+          <div 
+            onclick="openChatRoom('${chat.id}')"
+            class="p-3.5 flex items-center gap-3 cursor-pointer hover:bg-[#e6f0ff]/50 transition-colors ${isSelected ? 'bg-[#e6f0ff]/80 border-l-4 border-[#0066ff]' : ''}"
+          >
+            <img src="${chat.ownerAvatar}" alt="${chat.ownerName}" class="w-12 h-12 rounded-full object-cover border border-[#0066ff]">
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <h3 class="font-bold text-sm text-[#1a1a1a] truncate flex items-center gap-1">
+                  ${chat.ownerName}
+                  <i class="fa-solid fa-circle-check text-[#0066ff] text-[10px]"></i>
+                </h3>
+                <span class="text-[10px] text-[#666666]">${lastMsg ? lastMsg.time : ''}</span>
+              </div>
+
+              <p class="text-xs font-semibold text-[#0066ff] truncate mb-0.5">
+                ${chat.itemTitle}
+              </p>
+
+              <p class="text-xs text-[#666666] truncate">
+                ${lastMsg ? (lastMsg.sender === 'user' ? 'Tú: ' : '') + lastMsg.text : ''}
+              </p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openChatRoom(chatId) {
+      STATE.activeChatId = chatId;
+      renderChatThreads();
+
+      const chat = STATE.chats.find(c => c.id === chatId);
+      if (!chat) return;
+
+      const listPanel = document.getElementById('chat-list-panel');
+      const roomPanel = document.getElementById('chat-room-panel');
+      const emptyState = document.getElementById('chat-empty-state');
+      const activeRoom = document.getElementById('chat-active-room');
+
+      // Responsive Visibility Toggle
+      listPanel.classList.add('hidden', 'md:flex');
+      roomPanel.classList.remove('hidden');
+      roomPanel.classList.add('flex');
+      emptyState.classList.add('hidden');
+      activeRoom.classList.remove('hidden');
+      activeRoom.classList.add('flex');
+
+      // Update Header
+      document.getElementById('room-owner-name').querySelector('span').textContent = chat.ownerName;
+      document.getElementById('room-owner-avatar').src = chat.ownerAvatar;
+
+      // Update Reservation Status Banner
+      const banner = document.getElementById('room-reservation-banner');
+      banner.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-[#1a1a1a]">🛠️ ${chat.itemTitle}</span>
+          <span class="text-[#666666]">• ${chat.days} día(s) • Total: $${chat.totalPrice} MXN</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="bg-${chat.status === 'ACEPTADO' ? 'emerald-100 text-emerald-800' : 'amber-100 text-amber-800'} text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
+            ESTADO: ${chat.status}
+          </span>
+          <button onclick="toggleLoanStatus('${chat.id}')" class="bg-[#0066ff] hover:bg-[#0052cc] text-white font-bold text-[11px] px-3 py-1 rounded-lg transition-colors">
+            ${chat.status === 'ACEPTADO' ? 'Confirmar Devolución' : 'Aceptar Reserva'}
+          </button>
+        </div>
+      `;
+
+      // Update Message Stream
+      renderMessagesStream(chat);
+    }
+
+    function renderMessagesStream(chat) {
+      const stream = document.getElementById('room-messages-stream');
+      stream.innerHTML = chat.messages.map(msg => {
+        const isUser = msg.sender === 'user';
+        return `
+          <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'}">
+            <div class="max-w-[80%] rounded-2xl p-3 text-xs ${isUser ? 'bg-[#0066ff] text-white chat-bubble-user' : 'bg-white border border-black/10 text-[#1a1a1a] chat-bubble-owner'} shadow-xs">
+              <p class="leading-relaxed">${msg.text}</p>
+              <span class="block text-[9px] mt-1 text-right ${isUser ? 'text-white/80' : 'text-[#666666]'}">
+                ${msg.time} ${isUser ? '<i class="fa-solid fa-check-double text-[8px] ml-0.5"></i>' : ''}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Auto scroll to bottom of chat
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function handleSendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('room-message-input');
+      const text = input.value.trim();
+      if (!text || !STATE.activeChatId) return;
+
+      const chat = STATE.chats.find(c => c.id === STATE.activeChatId);
+      if (!chat) return;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      chat.messages.push({
+        sender: 'user',
+        text: text,
+        time: timeStr
+      });
+
+      input.value = '';
+      renderMessagesStream(chat);
+      renderChatThreads();
+    }
+
+    function toggleLoanStatus(chatId) {
+      const chat = STATE.chats.find(c => c.id === chatId);
+      if (!chat) return;
+
+      if (chat.status === 'PENDIENTE') {
+        chat.status = 'ACEPTADO';
+        chat.messages.push({
+          sender: 'owner',
+          text: '¡Reserva ACEPTADA! Nos vemos en el horario acordado.',
+          time: 'Ahora'
+        });
+        showToast('Reserva Aceptada');
+      } else {
+        chat.status = 'CONCLUIDO';
+        chat.messages.push({
+          sender: 'user',
+          text: 'Objeto devuelto en excelente estado. ¡Gracias vecina/o!',
+          time: 'Ahora'
+        });
+        showToast('Ronda Finalizada con Éxito');
+      }
+
+      openChatRoom(chatId);
+    }
+
+    function backToChatList() {
+      const listPanel = document.getElementById('chat-list-panel');
+      const roomPanel = document.getElementById('chat-room-panel');
+      listPanel.classList.remove('hidden');
+      roomPanel.classList.add('hidden');
+    }
+
+    // --- Publish New Item Functionality ---
+    function handlePublishSubmit(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('pub-title').value.trim();
+      const category = document.getElementById('pub-category').value;
+      const price = Number(document.getElementById('pub-price').value);
+      if (!title || !Number.isFinite(price) || price < 0) {
+        showToast('Revisa el título y el precio del objeto.');
+        return;
+      }
+      const desc = document.getElementById('pub-desc').value || 'Sin descripción adicional.';
+      const image = document.getElementById('pub-image').value || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80';
+      const distance = document.getElementById('pub-distance').value || 'A 100 m de ti';
+
+      const newItem = {
+        id: 'item-' + Date.now(),
+        title: title,
+        category: category,
+        price: price,
+        distance: distance,
+        rating: '5.0 (Nuevo)',
+        loansCount: 0,
+        ownerName: 'María G.',
+        ownerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        image: image,
+        desc: desc
+      };
+
+      STATE.items.unshift(newItem);
+      renderItems();
+      renderUserMyItems();
+
+      document.getElementById('publish-form').reset();
+      showToast('¡Tu objeto se ha publicado en la Ronda!');
+      switchTab('tab-feed');
+    }
+
+    // --- Render User Profile Listings ---
+    function renderUserMyItems() {
+      const container = document.getElementById('user-my-items');
+      const myItems = STATE.items.filter(i => i.ownerName === 'María G.');
+
+      if (myItems.length === 0) {
+        container.innerHTML = `<p class="text-xs text-[#666666]">Aún no has publicado objetos para compartir.</p>`;
+        return;
+      }
+
+      container.innerHTML = myItems.map(item => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-[#efede7]/40 border border-black/5">
+          <div class="flex items-center gap-3">
+            <img src="${item.image}" alt="${item.title}" class="w-12 h-12 rounded-lg object-cover">
+            <div>
+              <h4 class="font-bold text-xs text-[#1a1a1a]">${item.title}</h4>
+              <p class="text-[11px] text-[#0066ff] font-extrabold">$${item.price} MXN / día</p>
+            </div>
+          </div>
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+            Disponible
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // --- Toast Helper ---
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    function openNotificationToast() {
+      showToast('Tienes 2 avisos pendientes de la Ronda');
+    }
+  </script>
+
+</body>
+</html>
