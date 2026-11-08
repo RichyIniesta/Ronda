@@ -152,6 +152,70 @@
       background: #fff !important;
       box-shadow: 0 0 0 4px rgba(23,105,245,.09);
     }
+    /* Full-screen conversation view inspired by WhatsApp */
+    #chat-room-panel.chat-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 80 !important;
+      display: flex !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      min-height: 0 !important;
+      max-height: 100dvh !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: #f0f2f5 !important;
+      overflow: hidden !important;
+      box-shadow: none !important;
+    }
+    #chat-room-panel.chat-fullscreen #chat-active-room {
+      display: flex !important;
+      min-height: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #chat-room-panel.chat-fullscreen #room-messages-stream {
+      background-color: #f0f2f5;
+      background-image: radial-gradient(rgba(24,34,48,.035) .7px, transparent .7px);
+      background-size: 18px 18px;
+      padding: 22px clamp(16px, 5vw, 64px) !important;
+    }
+    #chat-room-panel.chat-fullscreen #room-messages-stream > div > div {
+      border-radius: 16px !important;
+      padding: 10px 13px !important;
+      font-size: 13px !important;
+      box-shadow: 0 1px 1px rgba(0,0,0,.08) !important;
+    }
+    #chat-room-panel.chat-fullscreen #room-reservation-banner {
+      padding: 10px 18px !important;
+      background: #eaf1ff !important;
+    }
+    #chat-room-panel.chat-fullscreen form {
+      padding: 12px clamp(12px, 4vw, 48px) !important;
+      padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+      gap: 10px !important;
+    }
+    #chat-room-panel.chat-fullscreen form input {
+      min-height: 44px;
+      background: #f5f7fa !important;
+      border-color: #e8ebef !important;
+    }
+    body.chat-view-open { overflow: hidden !important; }
+    @media (max-width: 767px) {
+      #chat-room-panel.chat-fullscreen .p-3\.5 {
+        padding: 10px 12px !important;
+      }
+      #chat-room-panel.chat-fullscreen #room-owner-avatar {
+        width: 38px;
+        height: 38px;
+      }
+      #chat-room-panel.chat-fullscreen #room-messages-stream {
+        padding: 16px 12px !important;
+      }
+      #chat-room-panel.chat-fullscreen #room-reservation-banner {
+        padding: 9px 12px !important;
+      }
+    }
     #main-content { padding-top: 30px !important; }
     #tab-feed h2 { letter-spacing: -.035em; }
     .cat-chip {
@@ -571,7 +635,7 @@
             <!-- Room Top Header -->
             <div class="p-3.5 bg-white border-b border-black/10 flex items-center justify-between shadow-xs">
               <div class="flex items-center gap-3">
-                <button onclick="backToChatList()" class="md:hidden text-[#0066ff] font-bold pr-1">
+                <button onclick="backToChatList()" aria-label="Volver a mensajes" class="text-[#1769f5] font-bold pr-1 w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f0f4fa]">
                   <i class="fa-solid fa-arrow-left text-lg"></i>
                 </button>
                 <img id="room-owner-avatar" src="" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-[#0066ff]">
@@ -1381,13 +1445,15 @@
       const emptyState = document.getElementById('chat-empty-state');
       const activeRoom = document.getElementById('chat-active-room');
 
-      // Responsive Visibility Toggle
-      listPanel.classList.add('hidden', 'md:flex');
+      // Open every conversation as a full-screen view on mobile and desktop.
+      listPanel.classList.add('hidden');
       roomPanel.classList.remove('hidden');
-      roomPanel.classList.add('flex');
+      roomPanel.classList.add('flex', 'chat-fullscreen');
       emptyState.classList.add('hidden');
       activeRoom.classList.remove('hidden');
       activeRoom.classList.add('flex');
+      document.body.classList.add('chat-view-open');
+      toggleTopMenu(false);
 
       // Update Header
       document.getElementById('room-owner-name').querySelector('span').textContent = chat.ownerName;
@@ -1485,9 +1551,20 @@
     function backToChatList() {
       const listPanel = document.getElementById('chat-list-panel');
       const roomPanel = document.getElementById('chat-room-panel');
-      listPanel.classList.remove('hidden');
+      const activeRoom = document.getElementById('chat-active-room');
+      roomPanel.classList.remove('chat-fullscreen', 'flex');
       roomPanel.classList.add('hidden');
+      listPanel.classList.remove('hidden');
+      activeRoom.classList.add('hidden');
+      activeRoom.classList.remove('flex');
+      document.body.classList.remove('chat-view-open');
     }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && document.getElementById('chat-room-panel')?.classList.contains('chat-fullscreen')) {
+        backToChatList();
+      }
+    });
 
     // --- Publish New Item Functionality ---
     function handlePublishSubmit(e) {
