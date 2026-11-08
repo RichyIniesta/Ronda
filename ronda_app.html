@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ronda: La Red Vecinal de Activos Compartidos</title>
+  <title>Ronda — Lo que necesitas, está más cerca</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -82,7 +82,180 @@
     .chat-bubble-owner {
       border-bottom-left-radius: 2px;
     }
-  </style>
+
+    /* RONDA VISUAL REFRESH — modern, calm and functional */
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+    :root {
+      --ronda-blue: #1769f5;
+      --ronda-blue-deep: #0c4fca;
+      --ronda-ink: #182230;
+      --ronda-muted: #77808d;
+      --ronda-canvas: #f6f7f8;
+      --ronda-line: #e9edf2;
+      --ronda-card-shadow: 0 10px 30px rgba(24, 34, 48, .055);
+    }
+    html { background: var(--ronda-canvas); }
+    body {
+      background: var(--ronda-canvas) !important;
+      color: var(--ronda-ink) !important;
+      font-family: 'DM Sans', system-ui, sans-serif !important;
+      letter-spacing: -.01em;
+    }
+    h1, h2, h3, .font-extrabold, .font-bold { font-family: 'Manrope', 'DM Sans', sans-serif; }
+    header {
+      background: rgba(255,255,255,.88) !important;
+      border-bottom: 1px solid rgba(24,34,48,.07) !important;
+      box-shadow: 0 4px 22px rgba(24,34,48,.035) !important;
+      padding-top: 13px !important;
+      padding-bottom: 13px !important;
+    }
+    header > div, #main-content { max-width: 1160px !important; }
+    header button > div:first-child {
+      border-radius: 14px !important;
+      box-shadow: 0 5px 14px rgba(23,105,245,.2) !important;
+    }
+    header input {
+      background: #f6f8fb !important;
+      border-color: #edf0f4 !important;
+      min-height: 42px;
+      transition: background .2s, box-shadow .2s, border-color .2s;
+    }
+    header input:focus {
+      background: #fff !important;
+      box-shadow: 0 0 0 4px rgba(23,105,245,.09);
+    }
+    #main-content { padding-top: 30px !important; }
+    .feed-intro {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 188px;
+      overflow: hidden;
+      padding: 30px 34px;
+      border-radius: 26px;
+      color: white;
+      background: linear-gradient(112deg, #145de0 0%, #2879fa 58%, #5798ff 100%);
+      box-shadow: 0 16px 34px rgba(23,105,245,.16);
+      isolation: isolate;
+    }
+    .feed-intro::before, .feed-intro::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .feed-intro::before { width: 310px; height: 310px; right: 8%; top: -190px; }
+    .feed-intro::after { width: 230px; height: 230px; right: 12%; bottom: -180px; }
+    .feed-intro-copy { max-width: 600px; }
+    .feed-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 13px;
+      color: rgba(255,255,255,.82);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .15em;
+    }
+    .feed-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #a9f0d0; box-shadow: 0 0 0 4px rgba(169,240,208,.15); }
+    .feed-intro h1 {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(27px, 4vw, 39px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -.055em;
+    }
+    .feed-intro p { margin-top: 11px; color: rgba(255,255,255,.84); font-size: 14px; }
+    .feed-intro-mark {
+      display: grid;
+      place-items: center;
+      width: 112px;
+      height: 112px;
+      margin-right: 5%;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 32px;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.95);
+      font-size: 44px;
+      transform: rotate(7deg);
+      backdrop-filter: blur(8px);
+    }
+    #tab-feed > div:first-of-type:not(.feed-intro) { margin-top: 2px; }
+    #tab-feed h2 { letter-spacing: -.035em; }
+    .cat-chip {
+      min-height: 40px;
+      padding-left: 17px !important;
+      padding-right: 17px !important;
+      border-radius: 13px !important;
+      box-shadow: none !important;
+      transition: transform .18s, background .18s, border-color .18s, color .18s;
+    }
+    .cat-chip:hover { transform: translateY(-1px); }
+    #items-grid { gap: 20px !important; }
+    #items-grid > article {
+      border: 1px solid rgba(24,34,48,.07) !important;
+      border-radius: 21px !important;
+      box-shadow: var(--ronda-card-shadow);
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    }
+    #items-grid > article:hover {
+      transform: translateY(-4px);
+      border-color: rgba(23,105,245,.2) !important;
+      box-shadow: 0 18px 38px rgba(24,34,48,.10);
+    }
+    #items-grid > article .relative.h-48 { height: 205px !important; background: #eef2f7; }
+    #items-grid > article img { transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+    #items-grid > article .p-4 { padding: 17px !important; }
+    #items-grid > article .border-t {
+      background: #fbfcfd !important;
+      border-color: #f0f2f5 !important;
+    }
+    button {
+      transition-timing-function: cubic-bezier(.2,.7,.2,1);
+    }
+    button:active { transform: scale(.975); }
+    #tab-categories > div, #tab-publish > div, #tab-profile > div,
+    #tab-chats > div {
+      border-radius: 22px !important;
+      box-shadow: var(--ronda-card-shadow);
+    }
+    #tab-publish input, #tab-publish select, #tab-publish textarea {
+      border-radius: 13px !important;
+      border-color: #e6eaf0 !important;
+      background: #f8f9fb !important;
+      min-height: 45px;
+    }
+    #tab-publish input:focus, #tab-publish select:focus, #tab-publish textarea:focus {
+      background: white !important;
+      box-shadow: 0 0 0 4px rgba(23,105,245,.08);
+    }
+    #item-modal > div {
+      border-radius: 24px !important;
+      box-shadow: 0 24px 70px rgba(15,23,42,.22) !important;
+    }
+    #toast { border-radius: 16px !important; box-shadow: 0 12px 32px rgba(15,23,42,.18); }
+    nav[aria-label], #bottom-nav {
+      border-top-color: rgba(24,34,48,.08) !important;
+      box-shadow: 0 -8px 28px rgba(24,34,48,.045) !important;
+    }
+    @media (max-width: 640px) {
+      #main-content { padding: 20px 15px 28px !important; }
+      .feed-intro { min-height: 170px; padding: 25px 22px; border-radius: 22px; }
+      .feed-intro h1 { font-size: 29px; }
+      .feed-intro p { max-width: 250px; font-size: 12px; }
+      .feed-intro-mark { width: 66px; height: 66px; margin-right: 0; border-radius: 21px; font-size: 27px; }
+      #items-grid { gap: 14px !important; }
+      #items-grid > article .relative.h-48 { height: 190px !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #items-grid > article, #items-grid > article img, .cat-chip { transition: none !important; }
+    }
+\n  </style>
 </head>
 <body class="min-h-screen flex flex-col pb-24 md:pb-0">
 
@@ -164,7 +337,17 @@
   <main id="main-content" class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 lg:p-6">
 
     <!-- ==================== TAB 1: FEED & EXPLORE ==================== -->
-    <section id="tab-feed" class="tab-content space-y-6">
+    <section id="tab-feed" class="tab-content space-y-6">\n
+      <!-- Feed introduction -->
+      <div class="feed-intro">
+        <div class="feed-intro-copy">
+          <span class="feed-eyebrow"><span class="feed-eyebrow-dot"></span> TU COMUNIDAD, MÁS CERCA</span>
+          <h1>Lo que necesitas,<br class="hidden sm:block"> está más cerca.</h1>
+          <p>Descubre objetos que tus vecinos tienen para compartir.</p>
+        </div>
+        <div class="feed-intro-mark" aria-hidden="true"><i class="fa-solid fa-handshake-angle"></i></div>
+      </div>
+
       
       <!-- Neighbor Stories / "Vecinos Activos" (Instagram-style) -->
       <div>
